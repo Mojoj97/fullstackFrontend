@@ -43,6 +43,7 @@
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
+              "baseHref": "https://github.com/Mojoj97/fullstackFrontend/",
               "budgets": [
                 {
                   "type": "initial",
