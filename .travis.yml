@@ -18,7 +18,7 @@ script:
 deploy:
   provider: pages
   skip_cleanup: true
-  github_token: $GITHUB_TOKEN
+  github_token: a02a023026c04d36f77fdcb1b7b3c6d795edc840
   local_dir: dist/angular-github-pages-travis
   on:
     branch: master
