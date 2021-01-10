@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { first } from 'rxjs/operators';
-
-import { AlertService, AuthenticationService } from 'src/app/services'
+import { Router } from '@angular/router';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { UserService } from 'src/app/services/user.service';
+import { User } from 'src/app/users';
 
 @Component({
   selector: 'app-login',
@@ -11,54 +10,57 @@ import { AlertService, AuthenticationService } from 'src/app/services'
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {
-
-  loginForm: FormGroup;
-  loading = false;
-  submitted = false;
-  returnUrl: string;
+  private userDetail = new User();
 
   constructor(
-    private formBuilder: FormBuilder,
-    private route: ActivatedRoute,
-    private router: Router,
-    private authenticationService: AuthenticationService,
-    private alertService: AlertService
-  ) {
-    
-   }
+    private userService: UserService, 
+    private router: Router
+  ){}
 
-  ngOnInit(): void {
-    this.loginForm = this.formBuilder.group({
-      username: ['', Validators.required],
-      password: ['', Validators.required]
-    });
-
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-
-  }
-
-  get f() { return this.loginForm.controls; }
-
-  onSubmit(){
-    this.submitted = true;
-
-    if(this.loginForm.invalid){
-      return;
+  ngOnInit(){
+    if(this.userService.isLoggedIn()){
+      this.router.navigate(['/product', localStorage.getItem('id')]);
     }
-
-    this.loading = true;
-    this.authenticationService.login(this.f.username.value, this.f.password.value)
-      .pipe(first())
-      .subscribe(
-        data => {
-          this.router.navigate([this.returnUrl]);
-        },
-        error => {
-          this.alertService.error(error);
-          this.loading = false;
-        }
-      );
-
   }
 
+  form = new FormGroup({
+    username: new FormControl('', Validators.required),
+    password: new FormControl('', Validators.required), 
+  });
+
+  Login(LogInformation){
+    this.userDetail.username = this.Username.value;
+    this.userDetail.password = this.Password.value;
+  
+
+    this.userService.login(this.userDetail).subscribe(
+      response =>{
+        let result = response.json();
+
+        if(result > 0){
+          let token = response.headers.get("Authorization");
+
+          localStorage.setItem("token", token);
+          localStorage.setItem("id", result);
+
+          this.router.navigate(['/product',result]);
+        }
+        if(result == -1){
+          alert("plese register before login Or invalid combination");
+        }
+      },
+      error =>
+      {
+        console.log("Error in authentication");
+      }
+    );
+  }
+
+  get Username(){
+    return this.form.get('username');
+  }
+
+  get Password(){
+    return this.form.get('password');
+  }
 }

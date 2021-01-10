@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { first } from 'rxjs/operators';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
-import { AlertService, UserService, AuthenticationService } from 'src/app/services';
+import { User } from 'src/app/users';
+import { UserService } from 'src/app/services/user.service';
+
 
 @Component({
   selector: 'app-register',
@@ -11,52 +12,70 @@ import { AlertService, UserService, AuthenticationService } from 'src/app/servic
   styleUrls: ['./register.component.css']
 })
 export class RegisterComponent implements OnInit {
-  registerForm: FormGroup;
-  loading = false;
-  submitted = false;
+  private userDetail = new User();
 
-  constructor(
-    private formBuilder: FormBuilder,
-    private router: Router,
-    private authenticationService: AuthenticationService,
-    private userService: UserService,
-    private alertService: AlertService
-  ) { 
-    if(this.authenticationService.currentUserValue){
-      this.router.navigate(['/']);
-    }
-  }
+  constructor(private user: UserService, private router: Router){ }
 
-  ngOnInit(): void {
-    this.registerForm = this.formBuilder.group({
-      firstName: ['', Validators.required],
-            lastName: ['', Validators.required],
-            username: ['', Validators.required],
-            password: ['', [Validators.required, Validators.minLength(6)]]
+  ngOnInit(){}
+    form = new FormGroup({
+      username: new FormControl('', Validators.required),
+      password: new FormControl('', Validators.required),
+      firstName: new FormControl('', Validators.required),
+      lastName: new FormControl('', Validators.required)
     });
-  }
 
-  get f() { return this.registerForm.controls; }
+  UserForm(UserInformation){
+    let pass = this.Password.value;
+    let confirmPass = this.ConfirmPassword.value;
 
-  onSubmit(){
-    this.submitted = true;
+    if(pass == confirmPass){
+      this.userDetail.username = this.Username.value;
+      this.userDetail.password = this.Password.value;
+      this.userDetail.firstName = this.FirstName.value;
+      this.userDetail.lastName = this.LastName.value;
 
-    if(this.registerForm.invalid){
-      return;
+    this.user.saveUser(this.userDetail).subscribe(
+      response =>{
+        let result = response.json();
+
+        if(result > 0){
+          this.router.navigate(['/login']);
+        }
+        else{
+          alert("error hile register User. Please try again!")
+        }
+      },
+      error =>
+      {
+        alert("error hile register User. Please try again!")
+      }
+    );
+    }
+    else
+    {
+      alert("Password and confirm Password not match");
     }
 
-    this.loading = true;
-        this.userService.register(this.registerForm.value)
-            .pipe(first())
-            .subscribe(
-                data => {
-                    this.alertService.success('Registration successful', true);
-                    this.router.navigate(['/login']);
-                },
-                error => {
-                    this.alertService.error(error);
-                    this.loading = false;
-                });
+  }
+
+  get Username(){
+    return this.form.get('username');
+  }
+
+  get Password(){
+    return this.form.get('password');
+  }
+
+  get ConfirmPassword(){
+    return this.form.get('confirmPassword');
+  }
+
+  get FirstName(){
+    return this.form.get('firstName');
+  }
+
+  get LastName(){
+    return this.form.get('lastName');
   }
 
 }
